@@ -1,6 +1,6 @@
 # Developer Documentation
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Start LocalStack**
 
@@ -27,11 +27,11 @@
      poetry run python terminal_service.py
      ```
 
-👉 You should now see messages being **sent by the gateway** and **received by the terminal service** in real time.
+ You should now see messages being **sent by the gateway** and **received by the terminal service** in real time.
 
 ---
 
-## 🔄 Message Flow
+## Message Flow
 
 ```
 +-------------------+       +---------------------+       +------------------------+
