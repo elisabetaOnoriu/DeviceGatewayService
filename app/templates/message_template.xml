@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Message xmlns="urn:example:device-message" version="1.0">
+  <Header>
+    <MessageID>${message_id}</MessageID>
+    <DeviceID>${device_id}</DeviceID>
+    <ClientID>${client_id}</ClientID>
+    <!-- ISO-8601 with timezone, e.g. 2025-08-19T12:34:56Z -->
+    <Timestamp>${timestamp}</Timestamp>
+  </Header>
+  <Body>
+    <Sensor>${sensor}</Sensor>
+    <Value>${value}</Value>
+    <Unit>${unit}</Unit>
+    <!-- Optional metadata -->
+    <Meta>
+      <Firmware>${firmware}</Firmware>
+      <Source>${source}</Source>
+    </Meta>
+  </Body>
+</Message>
