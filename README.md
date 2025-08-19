@@ -86,5 +86,12 @@ poetry run awslocal sqs receive-message \
   --queue-url http://localhost:4566/000000000000/device-messages
 ```
 
+## Settings (env)
+
+- `NUM_DEVICES` (default: 3) — how many simulated devices to produce messages for (IDs 1..N).
+- `SEND_INTERVAL_SEC` (default: 2) — seconds between message cycles (each cycle produces one message per device).
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `LOCALSTACK_ENDPOINT`, `QUEUE_NAME` — AWS/LocalStack configuration.
+
+The service loads settings from `.env` via Pydantic `BaseSettings` (`app/config/settings.py`).
 
 ```
