@@ -50,6 +50,8 @@ services:
       AWS_REGION: ${AWS_REGION:-us-east-1}
       LOCALSTACK_ENDPOINT: ${LOCALSTACK_ENDPOINT:-http://localhost:4566}
       QUEUE_NAME: ${QUEUE_NAME:-device-messages}
+      NUM_DEVICES: ${NUM_DEVICES:-3}
+      SEND_INTERVAL_SEC: ${SEND_INTERVAL_SEC:-2}
     command: ["python", "gateway.py"]
 
 volumes:
