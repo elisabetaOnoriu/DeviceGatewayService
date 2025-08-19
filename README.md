@@ -2,32 +2,32 @@
 
 ## Quick Start
 
-1. **Start LocalStack**
+### 1. Start LocalStack
+```bash
+docker compose up -d
+````
 
-   ```bash
-   docker compose up -d
-   ```
+### 2. Create the SQS queue
 
-2. **Create the queue**
+```bash
+poetry run awslocal sqs create-queue --queue-name device-messages
+```
 
-   ```bash
-   poetry run awslocal sqs create-queue --queue-name device-messages
-   ```
+### 3. Run the services
 
-3. **Run the services**
+* **Device Gateway (producer)** – generates random XML messages and sends them into SQS:
 
-   * Device Gateway (producer):
+```bash
+poetry run python gateway.py
+```
 
-     ```bash
-     poetry run python gateway.py
-     ```
-   * Terminal Data Service (consumer):
+* **Terminal Data Service (consumer)** – listens to the queue, consumes XML messages, and processes them:
 
-     ```bash
-     poetry run python terminal_service.py
-     ```
+```bash
+poetry run python terminal_service.py
+```
 
- You should now see messages being **sent by the gateway** and **received by the terminal service** in real time.
+You should now see XML messages being produced by the Device Gateway and consumed by the Terminal Data Service in real time.
 
 ---
 
@@ -47,5 +47,44 @@
          |                           |<-----------------------------|
 ```
 
-The **Device Gateway** generates and sends XML messages into the `device-messages` queue.
-The **Terminal Data Service** listens to the same queue, consumes messages, displays them, and removes them from the queue once processed.
+* The **Device Gateway** uses an XML template (`app/templates/message_template.xml`) and `message_factory.py` to generate valid device messages.
+* Messages are sent to the **device-messages** SQS queue in LocalStack.
+* The **Terminal Data Service** receives the XML messages, parses them, and acknowledges them (delete from queue).
+
+---
+
+## Testing
+
+### Validate schema locally
+
+Unit tests cover:
+
+* XML payload well-formedness
+* `device_id` and `client_id` > 0
+* Random message factory producing valid XML
+
+Run tests:
+
+```bash
+poetry run pytest
+```
+
+### Manually send and receive a message
+
+Send a test message into the queue:
+
+```bash
+poetry run awslocal sqs send-message \
+  --queue-url http://localhost:4566/000000000000/device-messages \
+  --message-body "<Message><Header>...</Header><Body>...</Body></Message>"
+```
+
+Receive the message:
+
+```bash
+poetry run awslocal sqs receive-message \
+  --queue-url http://localhost:4566/000000000000/device-messages
+```
+
+
+```
