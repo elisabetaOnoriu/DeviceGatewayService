@@ -11,39 +11,39 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# --- Add project root to PYTHONPATH (alembic/ is în rădăcină/proiect)
+# --- Add project root to PYTHONPATH (alembic/ is in project root)
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
-# --- Load .env (opțional, dar util)
+# --- Load .env (optional but useful)
 try:
     from dotenv import load_dotenv  # python-dotenv
     load_dotenv(PROJECT_ROOT / ".env")
 except Exception:
-    pass  # dacă nu ai python-dotenv, poți seta env în shell
+    pass  # if python-dotenv is not installed, set env vars in shell
 
-# --- Importă Base și modelele, ca autogenerate să "vadă" tabelele
+# --- Import Base and models, so autogenerate can "see" the tables
 from app.models.base import Base  # noqa: E402
-# importă modulele care definesc modele (doar importul e suficient)
+# import the modules that define models (just importing is enough)
 from app.models import device  # noqa: F401
-# dacă ai și clients, status etc., importă-le aici:
+# if you also have clients, status etc., import them here:
 # from app.models import client  # noqa: F401
 # from app.models import status  # noqa: F401
 
 target_metadata = Base.metadata
 
-# --- Determină DATABASE_URL
+# --- Determine DATABASE_URL
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    # fallback la alembic.ini dacă vrei
+    # fallback to alembic.ini if needed
     DATABASE_URL = config.get_main_option("sqlalchemy.url")
 
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is not set (în .env sau alembic.ini)")
+    raise RuntimeError("DATABASE_URL is not set (in .env or alembic.ini)")
 
 def run_migrations_offline() -> None:
-    """Offline mode – fără Engine, doar URL."""
+    """Offline mode – no Engine, only URL."""
     context.configure(
         url=DATABASE_URL,
         target_metadata=target_metadata,
@@ -56,7 +56,7 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 def run_migrations_online() -> None:
-    """Online mode – cu Engine și conexiune reală."""
+    """Online mode – with Engine and real connection."""
     configuration = config.get_section(config.config_ini_section) or {}
     configuration["sqlalchemy.url"] = DATABASE_URL
 

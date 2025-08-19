@@ -23,15 +23,15 @@ class Message(Base):
     timestamp: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("now()")  # timestamptz în Postgres
+        server_default=text("now()")  # timestamptz in Postgres
     )
     payload = Column(JSONB, nullable=False)
 
-    # (opțional) relații, doar dacă ai clasele mapate
+    # (optional) relationships, only if you have the mapped classes
     # device = relationship("Device", backref="messages")
     # client = relationship("Client", backref="messages")
 
-# indexuri utile
+# useful indexes
 Index("ix_messages_device_ts", Message.device_id, Message.timestamp.desc())
-# căutări rapide în JSONB (opțional)
+# fast searches in JSONB (optional)
 Index("ix_messages_payload_gin", Message.payload, postgresql_using="gin")

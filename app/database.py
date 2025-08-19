@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from dotenv import load_dotenv
-load_dotenv()  # citește .env din rădăcina proiectului
+load_dotenv()  # reads .env from root of project
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
