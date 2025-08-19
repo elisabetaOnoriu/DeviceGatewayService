@@ -1,15 +1,56 @@
-version: "3.8"
+version: "3.9"
 
 services:
   localstack:
-    image: localstack/localstack:latest
+    image: localstack/localstack:stable
     container_name: localstack
-    ports:
-      - "4566:4566"         # gateway for all services
     environment:
-      - SERVICES=s3,sqs     # add whatever other services you may want to use
-      - AWS_DEFAULT_REGION=us-east-1
+      - SERVICES=sqs
       - DEBUG=1
+      - AWS_DEFAULT_REGION=${AWS_REGION:-us-east-1}
+    ports:
+      - "4566:4566"
     volumes:
-      - "./.localstack:/var/lib/localstack"
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - localstack-data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "bash", "-c", "curl -sf http://localhost:4566/_localstack/health | grep '\"initialized\": true'"]
+      interval: 3s
+      timeout: 2s
+      retries: 30
+
+  # One-shot container to create the queue
+  sqs-init:
+    image: amazon/aws-cli:2.15.40
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
+    entrypoint:
+      - /bin/sh
+      - -lc
+      - >
+        aws --endpoint-url ${LOCALSTACK_ENDPOINT:-http://localhost:4566} sqs create-queue
+        --queue-name ${QUEUE_NAME:-device-messages}
+        && echo 'Queue created';
+    restart: "no"
+
+  device-gateway:
+    build: .
+    depends_on:
+      localstack:
+        condition: service_healthy
+      sqs-init:
+        condition: service_completed_successfully
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      LOCALSTACK_ENDPOINT: ${LOCALSTACK_ENDPOINT:-http://localhost:4566}
+      QUEUE_NAME: ${QUEUE_NAME:-device-messages}
+    command: ["python", "gateway.py"]
+
+volumes:
+  localstack-data:

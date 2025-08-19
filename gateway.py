@@ -1,46 +1,64 @@
-from fastapi import FastAPI, Depends, HTTPException
-from sqlalchemy.orm import Session
-from app.models.message_schema import MessageCreate
-from app.models.message import Message
-from app.templates import get_db  # or deps.get_db
+from __future__ import annotations
+import os
+import time
+import logging
 
-app = FastAPI()
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 
-@app.post("/messages", status_code=201)
-def create_message(payload: MessageCreate, db: Session = Depends(get_db)):
-    msg = Message(
-        device_id=payload.device_id,
-        client_id=payload.client_id,
-        timestamp=payload.timestamp,
-        payload=payload.payload,
+from app.models.message_factory import make_random_message_xml  # produce XML via template
+
+# ---------- Config (env) ----------
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "test")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "test")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
+LOCALSTACK_ENDPOINT = os.getenv("LOCALSTACK_ENDPOINT", "http://localhost:4566")
+QUEUE_NAME = os.getenv("QUEUE_NAME", "device-messages")
+SEND_INTERVAL_SEC = int(os.getenv("SEND_INTERVAL_SEC", "2"))
+
+# ---------- Logging ----------
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+log = logging.getLogger("device-gateway")
+
+# ---------- SQS ----------
+def sqs_client():
+    return boto3.client(
+        "sqs",
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        region_name=AWS_REGION,
+        endpoint_url=LOCALSTACK_ENDPOINT,
     )
-    db.add(msg)
-    db.commit()
-    db.refresh(msg)
-    return {"id": msg.id, "timestamp": msg.timestamp}
 
-@app.get("/messages/{message_id}")
-def get_message(message_id: int, db: Session = Depends(get_db)):
-    msg = db.get(Message, message_id)
-    if not msg:
-        raise HTTPException(status_code=404, detail="Message not found")
-    return {
-        "id": msg.id,
-        "device_id": msg.device_id,
-        "client_id": msg.client_id,
-        "timestamp": msg.timestamp,
-        "payload": msg.payload,
-    }
+def resolve_queue_url(sqs):
+    """Prefer AWS API; fall back to LocalStack implicit URL."""
+    try:
+        resp = sqs.get_queue_url(QueueName=QUEUE_NAME)
+        return resp["QueueUrl"]
+    except (ClientError, BotoCoreError):
+        # LocalStack default account id
+        return f"{LOCALSTACK_ENDPOINT.rstrip('/')}/000000000000/{QUEUE_NAME}"
 
-@app.get("/messages")
-def list_messages(device_id: int | None = None, client_id: int | None = None, db: Session = Depends(get_db)):
-    q = db.query(Message)
-    if device_id is not None:
-        q = q.filter(Message.device_id == device_id)
-    if client_id is not None:
-        q = q.filter(Message.client_id == client_id)
-    q = q.order_by(Message.device_id, Message.timestamp.desc())
-    return [
-        {"id": m.id, "device_id": m.device_id, "client_id": m.client_id, "timestamp": m.timestamp}
-        for m in q.limit(200).all()
-    ]
+def send_xml(xml_str: str) -> str:
+    sqs = sqs_client()
+    queue_url = resolve_queue_url(sqs)
+    resp = sqs.send_message(QueueUrl=queue_url, MessageBody=xml_str)
+    return resp.get("MessageId", "")
+
+# ---------- Main loop ----------
+def main():
+    log.info(
+        "Starting Device Gateway → region=%s endpoint=%s queue=%s interval=%ss",
+        AWS_REGION, LOCALSTACK_ENDPOINT, QUEUE_NAME, SEND_INTERVAL_SEC,
+    )
+    try:
+        while True:
+            msg = make_random_message_xml()   # MessageCreate (payload = XML string)
+            message_id = send_xml(msg.payload)
+            log.info("Sent message to SQS (provider_id=%s)", message_id)
+            time.sleep(SEND_INTERVAL_SEC)
+    except KeyboardInterrupt:
+        log.info("Shutting down gracefully.")
+
+if __name__ == "__main__":
+    main()
