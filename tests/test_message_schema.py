@@ -27,7 +27,7 @@ def test_message_create_valid_with_xml():
     assert m.client_id == 2
     assert isinstance(m.payload, str)
 
-    # Validate XML can be parsed
+    """ Validate XML can be parsed"""
     root = ET.fromstring(m.payload)
     assert root.tag == "Message"
     assert root.find(".//Sensor").text == "temp"
@@ -56,13 +56,13 @@ def test_forbid_extra_fields():
             device_id=1,
             client_id=1,
             payload="<Message/>",
-            extra_field="oops",  # forbidden by ConfigDict
+            extra_field="oops",
         )
 
 
 def test_send_result_minimal_ok():
     s = SendResult(queue_url="http://localhost/queue", provider_message_id="abc-123")
-    # HttpUrl/AnyUrl is not a str → cast or check components:
+    """ HttpUrl/AnyUrl is not a str → cast or check components:"""
     assert str(s.queue_url).startswith("http")
     assert s.queue_url.scheme in ("http", "https")
 

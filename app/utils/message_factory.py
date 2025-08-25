@@ -8,7 +8,7 @@ import uuid
 
 from app.models.message_schema import MessageCreate
 
-# Locate the XML template
+"""Locate the XML template"""
 TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "templates" / "message_template.xml"
 
 
@@ -56,7 +56,7 @@ def _render_xml_from_template(
     if not TEMPLATE_PATH.exists():
         raise FileNotFoundError(f"XML template not found at {TEMPLATE_PATH}")
 
-    # Choose randoms/defaults
+    """Choose randoms/defaults"""
     sensor = sensor or _random_sensor()
     if value is None or unit is None:
         v, u = _random_value_unit(sensor)

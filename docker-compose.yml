@@ -18,7 +18,7 @@ services:
       timeout: 2s
       retries: 30
 
-  # One-shot container to create the queue
+  #One-shot container to create the queue
   sqs-init:
     image: amazon/aws-cli:2.15.40
     depends_on:
@@ -52,7 +52,7 @@ services:
       QUEUE_NAME: ${QUEUE_NAME:-device-messages}
       NUM_DEVICES: ${NUM_DEVICES:-3}
       SEND_INTERVAL_SEC: ${SEND_INTERVAL_SEC:-2}
-    command: ["python", "gateway.py"]
+    command: ["python", "main.py"]
 
 volumes:
   localstack-data:

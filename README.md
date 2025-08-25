@@ -18,7 +18,7 @@ poetry run awslocal sqs create-queue --queue-name device-messages
 * **Device Gateway (producer)** – generates random XML messages and sends them into SQS:
 
 ```bash
-poetry run python gateway.py
+poetry run python main.py
 ```
 
 * **Terminal Data Service (consumer)** – listens to the queue, consumes XML messages, and processes them:

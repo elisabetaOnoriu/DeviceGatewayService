@@ -1,13 +1,12 @@
-# app/utils/env_loader.py
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Path to the .env file in project root
+"""Path to the .env file in project root"""
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ENV_PATH = BASE_DIR / ".env"
 
-# Load .env if it exists
+""" Load .env if it exists"""
 if ENV_PATH.exists():
     load_dotenv(dotenv_path=ENV_PATH)
 

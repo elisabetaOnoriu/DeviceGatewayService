@@ -1,7 +1,7 @@
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import MetaData
 
-# naming convention useful for Alembic (keys, indexes)
+""" naming convention useful for Alembic (keys, indexes)"""
 convention = {
     "ix": "ix_%(column_0_label)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
