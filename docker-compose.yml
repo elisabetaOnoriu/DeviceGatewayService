@@ -1,9 +1,6 @@
-version: "3.9"
-
 services:
   localstack:
     image: localstack/localstack:stable
-    container_name: localstack
     environment:
       - SERVICES=sqs
       - DEBUG=1
@@ -13,12 +10,12 @@ services:
     volumes:
       - localstack-data:/var/lib/localstack
     healthcheck:
-      test: ["CMD", "bash", "-c", "curl -sf http://localhost:4566/_localstack/health | grep '\"initialized\": true'"]
-      interval: 3s
-      timeout: 2s
+      test: [ "CMD-SHELL", "python -c \"import json,urllib.request,sys; d=json.load(urllib.request.urlopen('http://localhost:4566/_localstack/health')); sys.exit(0 if d.get('initialized') else 1)\"" ]
+      interval: 5s
+      timeout: 3s
       retries: 30
 
-  #One-shot container to create the queue
+
   sqs-init:
     image: amazon/aws-cli:2.15.40
     depends_on:
@@ -28,13 +25,10 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
       AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
-    entrypoint:
-      - /bin/sh
-      - -lc
-      - >
-        aws --endpoint-url ${LOCALSTACK_ENDPOINT:-http://localhost:4566} sqs create-queue
-        --queue-name ${QUEUE_NAME:-device-messages}
-        && echo 'Queue created';
+    entrypoint: ["/bin/sh","-lc"]
+    command: >
+      aws --endpoint-url http://localstack:4566 sqs create-queue
+      --queue-name ${QUEUE_NAME:-device-messages} || true
     restart: "no"
 
   device-gateway:
@@ -48,7 +42,8 @@ services:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
       AWS_REGION: ${AWS_REGION:-us-east-1}
-      LOCALSTACK_ENDPOINT: ${LOCALSTACK_ENDPOINT:-http://localhost:4566}
+      SQS_ENDPOINT_URL: ${SQS_ENDPOINT_URL:-http://localstack:4566}
+      ACCOUNT_ID: ${ACCOUNT_ID:-000000000000}
       QUEUE_NAME: ${QUEUE_NAME:-device-messages}
       NUM_DEVICES: ${NUM_DEVICES:-3}
       SEND_INTERVAL_SEC: ${SEND_INTERVAL_SEC:-2}
