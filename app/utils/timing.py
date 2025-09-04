@@ -4,7 +4,7 @@ import time
 
 def stop_aware_sleep(seconds: float, stop_event: threading.Event, step: float = 0.1) -> None:
     """
-    Doarme în pași mici pentru a verifica frecvent dacă s-a cerut oprirea.
+    Sleeps in small steps to frequently check if a stop has been requested.
     """
     remaining = seconds
     while remaining > 0 and not stop_event.is_set():

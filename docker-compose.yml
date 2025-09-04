@@ -1,53 +1,37 @@
 services:
+  # Local AWS emulator
   localstack:
     image: localstack/localstack:stable
+    container_name: localstack
     environment:
-      - SERVICES=sqs
-      - DEBUG=1
-      - AWS_DEFAULT_REGION=${AWS_REGION:-us-east-1}
+      - SERVICES=sqs                       # enable SQS only
+      - AWS_DEFAULT_REGION=us-east-1
+      - LS_LOG=info
+      - HOSTNAME_EXTERNAL=localstack       # make generated URLs resolve inside the Compose network
     ports:
-      - "4566:4566"
+      - "4566:4566"                        # edge port for all AWS services
     volumes:
       - localstack-data:/var/lib/localstack
     healthcheck:
-      test: [ "CMD-SHELL", "python -c \"import json,urllib.request,sys; d=json.load(urllib.request.urlopen('http://localhost:4566/_localstack/health')); sys.exit(0 if d.get('initialized') else 1)\"" ]
-      interval: 5s
-      timeout: 3s
-      retries: 30
+      test: ["CMD", "bash", "-lc", "curl -sf http://localhost:4566/_localstack/health | grep '\"initialized\": true'"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
+    networks:
+      - sky-comm
 
-
-  sqs-init:
-    image: amazon/aws-cli:2.15.40
-    depends_on:
-      localstack:
-        condition: service_healthy
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
-      AWS_DEFAULT_REGION: ${AWS_REGION:-us-east-1}
-    entrypoint: ["/bin/sh","-lc"]
-    command: >
-      aws --endpoint-url http://localstack:4566 sqs create-queue
-      --queue-name ${QUEUE_NAME:-device-messages} || true
-    restart: "no"
-
+  # Your application container
   device-gateway:
-    build: .
-    depends_on:
-      localstack:
-        condition: service_healthy
-      sqs-init:
-        condition: service_completed_successfully
-    environment:
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
-      AWS_REGION: ${AWS_REGION:-us-east-1}
-      SQS_ENDPOINT_URL: ${SQS_ENDPOINT_URL:-http://localstack:4566}
-      ACCOUNT_ID: ${ACCOUNT_ID:-000000000000}
-      QUEUE_NAME: ${QUEUE_NAME:-device-messages}
-      NUM_DEVICES: ${NUM_DEVICES:-3}
-      SEND_INTERVAL_SEC: ${SEND_INTERVAL_SEC:-2}
-    command: ["python", "main.py"]
+    build:
+      context: .
+    container_name: device-gateway
+    env_file: .env
+    networks:
+      - sky-comm
 
 volumes:
   localstack-data:
+networks:
+  sky-comm:
+    external: true
+    driver: bridge

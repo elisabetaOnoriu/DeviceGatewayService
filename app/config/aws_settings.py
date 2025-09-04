@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, AnyUrl
+from pydantic import Field, AnyUrl, BaseModel
+
 
 class AwsSettings(BaseSettings):
     """AWS / LocalStack settings."""

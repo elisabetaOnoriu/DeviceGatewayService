@@ -24,11 +24,11 @@ def main() -> None:
 
     log.info(
         "Starting Device Gateway | region=%s endpoint=%s queue=%s devices=%d interval=%ss",
-        settings.AWS_REGION,
-        settings.endpoint,
-        settings.QUEUE_NAME,
-        settings.NUM_DEVICES,
-        settings.SEND_INTERVAL_SEC,
+        settings.AWS.REGION,           # <- nested
+        settings.AWS.endpoint,         # <- property în AwsSettings
+        settings.AWS.QUEUE_NAME,       # <- nested
+        settings.SIM.NUM_DEVICES,      # <- din SimulationSettings
+        settings.SIM.SEND_INTERVAL_SEC # <- din SimulationSettings
     )
 
     """bootstrap SQS + queue URL"""
@@ -37,12 +37,12 @@ def main() -> None:
     log.info("Using queue URL: %s", queue_url)
 
     """prepare worker"""
-    device_ids = list(range(1, settings.NUM_DEVICES + 1))
+    device_ids = list(range(1, settings.SIM.NUM_DEVICES + 1))
     worker = MessagesWorker(
         sqs_factory=make_sqs_client,
         queue_url=queue_url,
         device_ids=device_ids,
-        send_interval_sec=settings.SEND_INTERVAL_SEC,
+        send_interval_sec=settings.SIM.SEND_INTERVAL_SEC,
         make_message_xml=make_random_message_xml,
         initial_delay=0.2,
     )

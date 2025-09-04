@@ -18,26 +18,26 @@ class SQSProtocol(Protocol):
 def make_sqs_client() -> SQSProtocol:
     """
     Creates a boto3 SQS client configured for either real AWS or LocalStack,
-    depending on the variables in settings
+    depending on values from settings.AWS (nested settings).
     """
     return boto3.client(
         "sqs",
-        aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-        region_name=settings.AWS_REGION,
-        endpoint_url=settings.endpoint,  # pentru LocalStack / endpoint custom
+        aws_access_key_id=settings.AWS.ACCESS_KEY_ID,
+        aws_secret_access_key=settings.AWS.SECRET_ACCESS_KEY,
+        region_name=settings.AWS.REGION,
+        endpoint_url=settings.AWS.endpoint,
     )
 
 
 def resolve_queue_url(sqs: SQSProtocol) -> str:
     """
-    Attempts to retrieve the QueueUrl via the SQS API.
-    If it fails (e.g., in certain LocalStack setups),
-    it falls back to the format: {endpoint}/{account_id}/{queue_name}.
+    Tries to retrieve the QueueUrl via SQS API. On failure (e.g., LocalStack quirks),
+    falls back to: {endpoint}/{account_id}/{queue_name}.
     """
     try:
-        return sqs.get_queue_url(QueueName=settings.QUEUE_NAME)["QueueUrl"]
+        queue_url = sqs.get_queue_url(QueueName=settings.AWS.QUEUE_NAME)["QueueUrl"]
+        return queue_url
     except (ClientError, BotoCoreError):
-        fallback = f"{settings.endpoint.rstrip('/')}/{settings.ACCOUNT_ID}/{settings.QUEUE_NAME}"
+        fallback = f"{settings.AWS.endpoint.rstrip('/')}/{settings.AWS.ACCOUNT_ID}/{settings.AWS.QUEUE_NAME}"
         log.warning("Falling back to LocalStack-style queue URL: %s", fallback)
         return fallback
