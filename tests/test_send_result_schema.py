@@ -1,5 +1,34 @@
 import pytest
+from pydantic import ValidationError
 from app.models.send_result_schema import SendResult
+
+@pytest.mark.parametrize("url", [
+    "http://localhost:4566/000000000000/device-messages",
+    "http://localstack:4566/000000000000/device-messages",
+    "https://example.com/q",
+    "http://127.0.0.1:4566/device-messages",
+])
+def test_send_result_accepts_various_valid_urls(url):
+    s = SendResult(queue_url=url, provider_message_id="abc-123")
+    u = s.queue_url
+    assert u.scheme in {"http", "https"}
+
+    assert u.host                          # are host
+    assert isinstance(u.port, (int, type(None)))
+    assert str(u).endswith(u.path)         # final string is consistent
+
+def test_send_result_fields_and_md5():
+    s = SendResult(
+        queue_url="http://local/queue",
+        provider_message_id="abc-123",
+        md5_of_body="d41d8cd98f00b204e9800998ecf8427e",
+    )
+    assert s.provider_message_id == "abc-123"
+    assert s.md5_of_body == "d41d8cd98f00b204e9800998ecf8427e"
+
+def test_send_result_rejects_bad_md5():
+    with pytest.raises(ValueError):
+        SendResult(queue_url="http://local/queue", provider_message_id="x", md5_of_body="zzz")
 
 def test_md5_none_passthrough():
     """Covers 'if v is None: return v'."""
@@ -35,4 +64,13 @@ def test_md5_invalid_rejected(bad_md5):
             queue_url="http://localhost/queue",
             provider_message_id="abc",
             md5_of_body=bad_md5,
+        )
+
+def test_extra_fields_forbidden():
+    """Make extra='forbid' funcționează."""
+    with pytest.raises(ValidationError):
+        SendResult(
+            queue_url="http://localhost/queue",
+            provider_message_id="abc",
+            extra_field="nope",
         )
