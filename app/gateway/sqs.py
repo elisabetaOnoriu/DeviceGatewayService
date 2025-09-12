@@ -24,7 +24,7 @@ def make_sqs_client() -> SQSProtocol:
         "sqs",
         aws_access_key_id=settings.AWS.ACCESS_KEY_ID,
         aws_secret_access_key=settings.AWS.SECRET_ACCESS_KEY,
-        region_name=settings.AWS.REGION,
+        region_name=settings.AWS.AWS_REGION,
         endpoint_url=settings.AWS.endpoint,
     )
 
