@@ -24,11 +24,11 @@ def main() -> None:
 
     log.info(
         "Starting Device Gateway | region=%s endpoint=%s queue=%s devices=%d interval=%ss",
-        settings.AWS.REGION,           # <- nested
-        settings.AWS.endpoint,         # <- property în AwsSettings
-        settings.AWS.QUEUE_NAME,       # <- nested
-        settings.SIM.NUM_DEVICES,      # <- din SimulationSettings
-        settings.SIM.SEND_INTERVAL_SEC # <- din SimulationSettings
+        settings.AWS.AWS_REGION,
+        settings.AWS.endpoint,
+        settings.AWS.QUEUE_NAME,
+        settings.SIM.NUM_DEVICES,
+        settings.SIM.SEND_INTERVAL_SEC,
     )
 
     """bootstrap SQS + queue URL"""

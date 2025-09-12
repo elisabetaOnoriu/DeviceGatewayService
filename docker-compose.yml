@@ -1,24 +1,24 @@
 services:
   # Local AWS emulator
-  localstack:
-    image: localstack/localstack:stable
-    container_name: localstack
-    environment:
-      - SERVICES=sqs                       # enable SQS only
-      - AWS_DEFAULT_REGION=us-east-1
-      - LS_LOG=info
-      - HOSTNAME_EXTERNAL=localstack       # make generated URLs resolve inside the Compose network
-    ports:
-      - "4566:4566"                        # edge port for all AWS services
-    volumes:
-      - localstack-data:/var/lib/localstack
-    healthcheck:
-      test: ["CMD", "bash", "-lc", "curl -sf http://localhost:4566/_localstack/health | grep '\"initialized\": true'"]
-      interval: 3s
-      timeout: 2s
-      retries: 20
-    networks:
-      - sky-comm
+#  localstack:
+#    image: localstack/localstack:stable
+#    container_name: device-localstack
+#    environment:
+#      - SERVICES=sqs                       # enable SQS only
+#      - AWS_DEFAULT_REGION=us-east-1
+#      - LS_LOG=info
+#      - HOSTNAME_EXTERNAL=localstack       # make generated URLs resolve inside the Compose network
+#    ports:
+#      - "4566:4566"                        # edge port for all AWS services
+#    volumes:
+#      - localstack-data:/var/lib/localstack
+#    healthcheck:
+#      test: ["CMD", "bash", "-lc", "curl -sf http://localhost:4566/_localstack/health | grep '\"initialized\": true'"]
+#      interval: 3s
+#      timeout: 2s
+#      retries: 20
+#    networks:
+#      - sky-comm
 
   # Your application container
   device-gateway:
@@ -29,8 +29,8 @@ services:
     networks:
       - sky-comm
 
-volumes:
-  localstack-data:
+#volumes:
+#  localstack-data:
 networks:
   sky-comm:
     external: true
