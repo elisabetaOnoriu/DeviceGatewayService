@@ -4,6 +4,7 @@ import threading
 import time
 
 from app.config.settings import settings
+from app.infrastructure.redis_client import get_redis
 from app.utils.shutdown import ShutdownHandler
 from app.utils.message_factory import make_random_message_xml
 
@@ -36,6 +37,14 @@ def main() -> None:
     queue_url = resolve_queue_url(sqs_boot)
     log.info("Using queue URL: %s", queue_url)
 
+    redis_client = get_redis()
+
+    try:
+        redis_client.ping()
+        log.info("Connected to Redis.")
+    except Exception as e:
+        log.warning("Redis not reachable: %s", e)
+
     """prepare worker"""
     device_ids = list(range(1, settings.SIM.NUM_DEVICES + 1))
     worker = MessagesWorker(
@@ -45,6 +54,7 @@ def main() -> None:
         send_interval_sec=settings.SIM.SEND_INTERVAL_SEC,
         make_message_xml=make_random_message_xml,
         initial_delay=0.2,
+        redis_client=redis_client,
     )
 
     shutdown = ShutdownHandler(log)
