@@ -97,7 +97,7 @@ class MessagesWorker:
             return
         try:
             name = "hello"
-            r.set("greeting", name, ex=60)  # TTL 60s, doar ca să nu lase junk
+            r.set("greeting", name, ex=60)
             val = r.get("greeting")
             if isinstance(val, bytes):
                 val = val.decode("utf-8", errors="ignore")
