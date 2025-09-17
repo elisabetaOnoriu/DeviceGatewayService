@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, AnyUrl
+from pydantic import Field, AnyUrl, BaseModel
 
 from app.config.aws_settings import AwsSettings
 from app.config.db_settings import DbSettings

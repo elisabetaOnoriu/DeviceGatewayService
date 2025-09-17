@@ -8,7 +8,7 @@ from .base import Base
 class Message(Base):
     __tablename__ = "messages"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
     device_id: Mapped[int] = mapped_column(
         ForeignKey("devices.device_id", ondelete="CASCADE"),
         index=True,
@@ -24,7 +24,7 @@ class Message(Base):
         nullable=False,
         server_default=text("now()")  # timestamptz in Postgres
     )
-    payload = Column(Text, nullable=False)
+    payload: Mapped[str] = mapped_column(Text, nullable=False)
 
     device = relationship("Device", backref="messages")
     client = relationship("Client", backref="messages")

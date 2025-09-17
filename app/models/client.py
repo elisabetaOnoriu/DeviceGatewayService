@@ -7,8 +7,6 @@ from .base import Base
 class Client(Base):
     __tablename__ = "clients"
 
-    client_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    client_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String, nullable=False)
     email: Mapped[str | None] = mapped_column(String, nullable=True)
-
-    devices: Mapped[list["Device"]] = relationship(back_populates="client")
