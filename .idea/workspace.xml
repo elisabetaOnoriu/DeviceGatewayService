@@ -5,8 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="baf6bb6f-5dfc-4a43-8c87-9b4b7b7004a9" name="Changes" comment="Configured and integrated redis client.">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/gateway/worker.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/gateway/worker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,8 +33,8 @@
 }</component>
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/elisabetaOnoriu/DeviceGatewayService.git&quot;,
-    &quot;accountId&quot;: &quot;093c5f8d-a9c9-41ad-86d1-22c307b119ec&quot;
+    &quot;url&quot;: &quot;https://github.com/elisabetaOnoriu/DeviceGatewayService&quot;,
+    &quot;accountId&quot;: &quot;d9048c5a-0423-46f3-9288-e3f6646815b7&quot;
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
@@ -51,29 +53,29 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python tests.Python tests for test_message_schema.test_message_create_accepts_iso_timestamp_str.executor": "Run",
-    "Python tests.Python tests for test_message_schema.test_message_create_rejects_non_positive_device_id.executor": "Debug",
-    "Python tests.Python tests for test_message_schema.test_message_create_valid_minimal.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.worker.executor": "Debug",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "feature/update",
-    "last_opened_file_path": "C:/Users/eonoriu/PycharmProjects/Device-Gateway-Service",
-    "settings.editor.selected.configurable": "com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python tests.Python tests for test_message_schema.test_message_create_accepts_iso_timestamp_str.executor&quot;: &quot;Run&quot;,
+    &quot;Python tests.Python tests for test_message_schema.test_message_create_rejects_non_positive_device_id.executor&quot;: &quot;Debug&quot;,
+    &quot;Python tests.Python tests for test_message_schema.test_message_create_valid_minimal.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.worker.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/update&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/eonoriu/PycharmProjects/Device-Gateway-Service&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\eonoriu\PycharmProjects\Device-Gateway-Service\app\utils" />
       <recent name="C:\Users\eonoriu\PycharmProjects\Device-Gateway-Service\app" />
     </key>
   </component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Python tests.Python tests for test_message_schema.test_message_create_accepts_iso_timestamp_str">
     <configuration name="Python tests for test_message_schema.test_message_create_accepts_iso_timestamp_str" type="tests" factoryName="Autodetect" temporary="true" nameIsGenerated="true">
       <module name="PythonProject2" />
       <option name="ENV_FILES" value="" />
@@ -167,16 +169,5 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Configured and integrated redis client." />
     <option name="LAST_COMMIT_MESSAGE" value="Configured and integrated redis client." />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/gateway/worker.py</url>
-          <line>116</line>
-          <option name="timeStamp" value="33" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>

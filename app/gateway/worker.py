@@ -105,6 +105,25 @@ class MessagesWorker:
         except Exception as e:
             log.warning("Redis smoke test FAILED: %s", e)
 
+    def _mirror_message(self, payload: str, device_id: int, limit: int = 100, ttl_sec: int = 3600) -> None:
+        r = self.redis_client
+        if r is None:
+            return
+        try:
+            key = "mirror:messages"
+            entry = {
+                "ts": int(time.time()),
+                "device_id": device_id,
+                "payload": payload,
+            }
+
+            import json
+            r.lpush(key, json.dumps(entry))
+            r.ltrim(key, 0, limit - 1)
+            r.expire(key, ttl_sec)
+        except Exception as e:
+            log.warning("Mirror Redis error: %s", e)
+
     def run(self, stop_event: threading.Event) -> None:
         sqs = self._sqs_factory()
         log.info(
@@ -139,6 +158,7 @@ class MessagesWorker:
                     provider_id = send_xml(sqs, self._queue_url, msg.payload)
                     log.info("Sent XML from device_id=%s (provider_id=%s)", device_id, provider_id)
                     self._cache_last_and_heartbeat(device_id, msg.payload)
+                    self._mirror_message(msg.payload, device_id)
                 except (ClientError, BotoCoreError) as e:
                     log.error("Failed to send for device_id=%s: %s", device_id, e)
 
