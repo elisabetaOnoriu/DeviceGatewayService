@@ -37,10 +37,10 @@ def main() -> None:
     queue_url = resolve_queue_url(sqs_boot)
     log.info("Using queue URL: %s", queue_url)
 
-    redis_client = get_redis()
+    redis_connection = get_redis()
 
     try:
-        redis_client.ping()
+        redis_connection.ping()
         log.info("Connected to Redis.")
     except Exception as e:
         log.warning("Redis not reachable: %s", e)
@@ -54,7 +54,7 @@ def main() -> None:
         send_interval_sec=settings.SIM.SEND_INTERVAL_SEC,
         make_message_xml=make_random_message_xml,
         initial_delay=0.2,
-        redis_client=redis_client,
+        redis_connection=redis_connection,
     )
 
     shutdown = ShutdownHandler(log)

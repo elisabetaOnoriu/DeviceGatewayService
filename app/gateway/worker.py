@@ -7,7 +7,7 @@ from typing import Callable, Protocol, Sequence
 
 from botocore.exceptions import BotoCoreError, ClientError
 
-from app.infrastructure import redis_client
+from app.infrastructure import redis_client as redis_infra
 from app.utils.timing import stop_aware_sleep
 from app.gateway.sender import send_xml
 
@@ -32,9 +32,9 @@ class MessagesWorker:
         send_interval_sec: float,
         make_message_xml: Callable[[int], "AnyMessage"],
         initial_delay: float = 0.2,
-        redis_client=None,
+        redis_connection=None,
     ) -> None:
-        self.redis_client = redis_client
+        self.redis_connection = redis_connection or redis_infra.get_redis()
         self._sqs_factory = sqs_factory
         self._queue_url = queue_url
         self._device_ids = list(device_ids)
@@ -48,7 +48,7 @@ class MessagesWorker:
         Fixed-window: allows at most `limit` messages per `window_sec` for a device.
         Uses INCR + EXPIRE. If Redis is absent/unavailable, allows (fail-open).
         """
-        r = self.redis_client
+        r = self.redis_connection
         if r is None:
             return True
         try:
@@ -66,7 +66,7 @@ class MessagesWorker:
         Idempotency: returns True if the payload was seen in the last `ttl_sec` seconds.
         Uses MD5(payload) and SET NX with TTL.
         """
-        r = self.redis_client
+        r = self.redis_connection
         if r is None:
             return False
         try:
@@ -81,7 +81,7 @@ class MessagesWorker:
         """
         Stores the last message and a short heartbeat with TTL.
         """
-        r = self.redis_client
+        r = self.redis_connection
         if r is None:
             return
         try:
@@ -91,7 +91,7 @@ class MessagesWorker:
             log.warning("Cache Redis error for device_id=%s: %s", device_id, e)
 
     def _redis_smoke_test(self) -> None:
-        r = self.redis_client
+        r = self.redis_connection
         if r is None:
             log.info("Redis client is None — skipping Redis smoke test.")
             return
@@ -106,23 +106,50 @@ class MessagesWorker:
             log.warning("Redis smoke test FAILED: %s", e)
 
     def _mirror_message(self, payload: str, device_id: int, limit: int = 100, ttl_sec: int = 3600) -> None:
-        r = self.redis_client
+        r = self.redis_connection
         if r is None:
             return
         try:
-            key = "mirror:messages"
-            entry = {
-                "ts": int(time.time()),
-                "device_id": device_id,
-                "payload": payload,
-            }
-
-            import json
-            r.lpush(key, json.dumps(entry))
-            r.ltrim(key, 0, limit - 1)
-            r.expire(key, ttl_sec)
+            key = "mirror:messages:list"
+            now = int(time.time())
+            self._push_and_trim(r, key, payload, device_id, now, limit)
+            self._prune_old_entries(r, key, now, ttl_sec)
         except Exception as e:
             log.warning("Mirror Redis error: %s", e)
+
+    def _push_and_trim(self, r, key: str, payload: str, device_id: int, now: int, limit: int) -> None:
+        import json
+        entry = json.dumps({
+            "ts": now,
+            "device_id": device_id,
+            "payload": payload
+        })
+
+        p = r.pipeline()
+        p.lpush(key, entry)
+        p.ltrim(key, 0, limit - 1)
+        p.execute()
+
+    def _prune_old_entries(self, r, key: str, now: int, ttl_sec: int) -> None:
+        import json
+        cutoff = now - ttl_sec
+
+        while True:
+            last = r.lindex(key, -1)
+            if not last:
+                return
+
+            try:
+                data = json.loads(last)
+                ts = int(data.get("ts", now))
+            except Exception:
+                r.rpop(key)
+                continue
+
+            if ts >= cutoff:
+                return
+
+            r.rpop(key)
 
     def run(self, stop_event: threading.Event) -> None:
         sqs = self._sqs_factory()
@@ -144,7 +171,6 @@ class MessagesWorker:
                 try:
                     msg = self._make_message_xml(device_id=device_id)
 
-                    # (1) Rate limit
                     if not self._rate_limit_ok(device_id):
                         log.debug("Rate limited device_id=%s", device_id)
                         continue
