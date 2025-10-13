@@ -11,6 +11,7 @@ from app.utils.message_factory import make_random_message_xml
 from app.gateway.sqs import make_sqs_client, resolve_queue_url
 from app.gateway.worker import MessagesWorker
 
+from app.tasks.kafka_tasks import send_kafka_events
 
 def configure_logging() -> None:
     logging.basicConfig(

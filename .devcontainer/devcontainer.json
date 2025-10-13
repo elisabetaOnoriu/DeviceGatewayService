@@ -1,0 +1,19 @@
+{
+  "name": "Device Gateway Dev Container",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "device-gateway",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose",
+  "overrideCommand": false,
+  "runServices": ["device-gateway", "redis", "kafka", "loki", "promtail", "grafana"],
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python", "ms-python.vscode-pylance"],
+      "settings": {
+        "python.defaultInterpreterPath": "/app/.venv/bin/python",
+        "python.testing.pytestEnabled": true
+      }
+    }
+  },
+  "postCreateCommand": "python3 -V && python3 -m pip -V || true"
+}
