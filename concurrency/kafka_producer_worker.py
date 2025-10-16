@@ -3,7 +3,7 @@ import time
 import json
 from typing import TYPE_CHECKING
 
-from app.gateway.concurrency.base_worker import BaseWorker
+from concurrency.base_worker import BaseWorker
 
 if TYPE_CHECKING:
     import logging
