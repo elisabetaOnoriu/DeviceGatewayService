@@ -7,7 +7,7 @@ from .kafka_consumer_worker import KafkaConsumerWorker
 __all__ = [
     "BaseWorker",
     "ThreadManager",
-    "SQSProducerCLient",
+    "SQSProducerClient",
     "SQSConsumerClient",
     "KafkaProducerWorker",
     "KafkaConsumerWorker",

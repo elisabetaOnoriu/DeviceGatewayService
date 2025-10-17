@@ -49,3 +49,8 @@ class ThreadManager:
         self._futures.clear()
         self.stop_event = Event()
         self.log.info("[ThreadManager] stopped.")
+    
+    def join(self, timeout: Optional[float] = None) -> None:
+        """Wait for all workers to complete or timeout."""
+        if self._futures:
+            wait(self._futures, timeout=timeout)

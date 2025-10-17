@@ -21,7 +21,7 @@ class SQSConsumerClient(BaseWorker):
         )
         self.queue_url = self.sqs.get_queue_url(QueueName=self.queue_name)["QueueUrl"]
 
-    def tick(self) -> None:
+    def perform_iteration(self) -> None:
         # One iteration: long-poll + dispatch to the internal thread pool
         resp = self.sqs.receive_message(
             QueueUrl=self.queue_url,
@@ -41,12 +41,10 @@ class SQSConsumerClient(BaseWorker):
             self.log.error("[SQS Consumer] processing failed: %s", e)
 
     def _process_one(self, body: dict) -> None:
-        # Example side-effect: store latest value per device in Redis
         device_id = body.get("device_id")
         val = body.get("value")
         if self.redis:
             self.redis.set(f"device:{device_id}:last_value", val, ex=3600)
 
     def on_stop(self) -> None:
-        # Gracefully stop the internal pool
         self.exec.shutdown(wait=True, cancel_futures=False)

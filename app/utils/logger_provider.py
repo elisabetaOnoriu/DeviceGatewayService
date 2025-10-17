@@ -1,6 +1,6 @@
 import logging
 
-class LoggingService:
+class LoggerProvider:
     """Handles logging configuration for the application"""
     
     @staticmethod

@@ -20,7 +20,7 @@ class SQSProducerClient(BaseWorker):
         )
         self.queue_url = self.sqs.get_queue_url(QueueName=self.queue_name)["QueueUrl"]
 
-    def tick(self) -> None:
+    def perform_iteration(self) -> None:
         device_id = random.choice(self.device_ids)
         payload = {"device_id": device_id, "value": random.random()}
         self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=json.dumps(payload))

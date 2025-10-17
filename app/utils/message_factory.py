@@ -105,5 +105,5 @@ def make_random_message_xml(
         device_id=device_id,
         client_id=client_id,
         timestamp=ts_dt if with_timestamp else None,
-        payload=xml_payload,  # NOTE: payload is str (XML), not dict
+        payload=xml_payload,
     )

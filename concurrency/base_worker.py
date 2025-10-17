@@ -11,15 +11,15 @@ class BaseWorker(ABC):
         self.settings = settings
 
     @abstractmethod
-    def tick(self) -> None:
-        """One unit of work."""
+    def perform_iteration(self) -> None:
+        """Execute one unit of work (send/poll/process once)."""
         raise NotImplementedError
 
     def run(self, stop_event, sleep_sec: Optional[float] = None) -> str:
         self.log.info("[%s] started", self.NAME)
         try:
             while not stop_event.is_set():
-                self.tick()
+                self.perform_iteration()
                 if sleep_sec:
                     time.sleep(sleep_sec)
         except Exception as e:
