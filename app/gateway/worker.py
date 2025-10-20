@@ -30,7 +30,7 @@ class MessagesWorker:
         queue_url: str,
         device_ids: Sequence[int],
         send_interval_sec: float,
-        make_message_xml: Callable[[int], "AnyMessage"],
+        make_message_xml: Callable[[int]],
         initial_delay: float = 0.2,
         redis_connection=None,
     ) -> None:
