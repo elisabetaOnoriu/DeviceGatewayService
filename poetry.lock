@@ -464,7 +464,7 @@ version = "2.10"
 description = "A lightweight Python client for LocalStack."
 optional = false
 python-versions = "*"
-groups = ["dev"]
+groups = ["main", "dev"]
 files = [
     {file = "localstack_client-2.10.tar.gz", hash = "sha256:732a07e23fffd6a581af2714bbe006ad6f884ac4f8ac955211a8a63321cdc409"},
 ]
@@ -1331,4 +1331,4 @@ standard = ["colorama (>=0.4) ; sys_platform == \"win32\"", "httptools (>=0.6.3)
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "46be3cb866c12e1a690a6ee80b6fa2d4539ee0338c0c29ce7ac0a00982a62e2e"
+content-hash = "7eed80cff2a73638f4d45871703a687d228227f57d04eb38d72399adbc9a120a"
