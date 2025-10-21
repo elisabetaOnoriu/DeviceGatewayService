@@ -1,4 +1,4 @@
-from asyncio import as_completed
+from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 import threading
 from concurrency_final.base_worker import BaseWorker

@@ -35,10 +35,24 @@ class SQSProducer(BaseWorker):
             try:
                 self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=body)
                 print(f"[SQSProducer {self.client_id}] sent {body} on {self.thread.name}")
+                time.sleep(self.interval_sec)
+
             except Exception as e:
                 self.running.clear()
                 print(f"[SQSProducer {self.client_id}] send failed: {e}")
 
 
         print(f"[SQSProducer {self.client_id}] Stopped gracefully.")
+
+    @classmethod
+    def from_settings(cls, settings, client_id: str = "sqs-producer-1"):
+        return cls(
+            client_id=client_id,
+            queue_name=settings.AWS.QUEUE_NAME,
+            region=settings.AWS.AWS_REGION,
+            endpoint_url=getattr(settings.AWS, "endpoint", None),
+            interval_sec=settings.SIM.SEND_INTERVAL_SEC,
+            device_ids=list(range(1, settings.SIM.NUM_DEVICES + 1)),
+        )
+
 
