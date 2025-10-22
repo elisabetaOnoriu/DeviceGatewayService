@@ -3,6 +3,8 @@ import json
 import time
 from typing import Optional
 
+from app.models.device_message import DeviceMessage
+
 from .base_worker import BaseWorker
 
 class KafkaProducerWorker(BaseWorker):
@@ -14,14 +16,14 @@ class KafkaProducerWorker(BaseWorker):
         bootstrap_servers: str = "localhost:9092",
         interval_sec: float = 1.0,
         device_ids: Optional[list[int]] = None,
-        redis=None,  # opțional
+        redis=None,
     ) -> None:
         super().__init__(client_id)
         self.topic = topic
         self.interval_sec = interval_sec
         self.device_ids = device_ids or [1, 2, 3]
         self.redis = redis
-        self._idx = 0  # round-robin
+        self._idx = 0
 
         from kafka import KafkaProducer as _KafkaProducer
         self.producer = _KafkaProducer(
@@ -32,18 +34,10 @@ class KafkaProducerWorker(BaseWorker):
     def run(self) -> None:
         try:
             while self.running.is_set():
-                # pick device id round-robin
                 device_id = self.device_ids[self._idx]
                 self._idx = (self._idx + 1) % len(self.device_ids)
 
-                message = {
-                    "device_id": device_id,
-                    "timestamp": time.time(),
-                    "data": {
-                        "temperature": 20 + (device_id % 10),
-                        "humidity": 50 + (device_id % 20),
-                    },
-                }
+                message = DeviceMessage.create_for_device(device_id).to_dict()
 
                 try:
                     self.producer.send(self.topic, value=message)

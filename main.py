@@ -11,7 +11,7 @@ def main() -> None:
     redis_connection = RedisClient(log).get()
 
     sqs_producer = SQSProducer.from_settings(settings)
-    sqs_consumer = SQSConsumer.from_settings(log, settings, redis_connection, worker_threads=4)
+    sqs_consumer = SQSConsumer.from_settings(settings, redis_connection, worker_threads=4)
     kafka_producer = KafkaProducerWorker.from_settings(settings, client_id="kafka-producer-1", redis=redis_connection)
     kafka_consumer = KafkaConsumerWorker.from_settings(settings, client_id="kafka-consumer-1")
     
