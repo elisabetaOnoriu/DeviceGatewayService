@@ -1,32 +1,27 @@
 import logging
-from threading import Event
-from contextlib import suppress
-
+from app.infrastructure.redis_client import RedisClient
 from app.utils.logger_provider import LoggerProvider
 from app.config.settings import settings
-from concurrency_final.thread_manager import ThreadManager
-from concurrency_final.sqs_producer import SQSProducer
-
+from concurrency_final import ThreadManager, SQSProducer, SQSConsumer, KafkaProducerWorker, KafkaConsumerWorker
 
 def main() -> None:
     LoggerProvider.configure()
     log = logging.getLogger("device-gateway")
 
-    sqs_producer = SQSProducer(
-        client_id="sqs-producer-1",
-        queue_name=settings.AWS.QUEUE_NAME,
-        region=settings.AWS.AWS_REGION,
-        endpoint_url=getattr(settings.AWS, "endpoint", None),
-        interval_sec=settings.SIM.SEND_INTERVAL_SEC,
-        device_ids=list(range(1, settings.SIM.NUM_DEVICES + 1)),
-    )
-    clients = [sqs_producer]
+    redis_connection = RedisClient(log).get()
 
-    mgr = ThreadManager(max_workers=len(clients))
+    sqs_producer = SQSProducer.from_settings(settings)
+    sqs_consumer = SQSConsumer.from_settings(settings, redis_connection, worker_threads=4)
+    kafka_producer = KafkaProducerWorker.from_settings(settings, client_id="kafka-producer-1", redis=redis_connection)
+    kafka_consumer = KafkaConsumerWorker.from_settings(settings, client_id="kafka-consumer-1")
+    
+    clients = [sqs_producer, sqs_consumer, kafka_producer, kafka_consumer]
+    manager = ThreadManager(max_workers=len(clients))
+    
     for c in clients:
-        mgr.add_client(c)
+        manager.add_client(c)
 
-    mgr.wait_for_all()
+    manager.wait_for_all()
 
 if __name__ == "__main__":
     main()

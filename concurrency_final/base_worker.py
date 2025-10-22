@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
  
 class BaseWorker:
     """Base class for clients that use a thread assigned by ThreadPoolManager."""
-    def __init__(self, client_id):
+    def __init__(self, client_id, kwargs=None):
         self.client_id = client_id
         self.thread = None
         self.running = threading.Event()
