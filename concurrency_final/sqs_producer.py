@@ -1,7 +1,6 @@
 import threading
 import time
 import json
-from uuid import uuid4
 import boto3
 
 from app.models.device_message import DeviceMessage
@@ -34,7 +33,7 @@ class SQSProducer(BaseWorker):
     def run(self):
         while self.running.is_set():
             device_id = self._next_device_id()
-            payload = DeviceMessage.create_for_device(device_id).to_dict()
+            payload = DeviceMessage(device_id=device_id).to_dict()
             body = json.dumps(payload)
 
             try:
