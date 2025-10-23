@@ -37,7 +37,7 @@ class KafkaProducerWorker(BaseWorker):
                 device_id = self.device_ids[self._idx]
                 self._idx = (self._idx + 1) % len(self.device_ids)
 
-                message = DeviceMessage.create_for_device(device_id).to_dict()
+                message = DeviceMessage(device_id=device_id).to_dict()
 
                 try:
                     self.producer.send(self.topic, value=message)
