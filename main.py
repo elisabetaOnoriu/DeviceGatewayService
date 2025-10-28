@@ -25,11 +25,16 @@ def main() -> None:
     #     manager.add_client(c)
 
     # manager.wait_for_all()
-    workers = ["sqs_producer", "sqs_consumer", "kafka_producer", "kafka_consumer", "beat"]
-    processes = [spawn("worker", "--concurrency=1") for _ in workers]
+    workers = ["sqs_producer", "sqs_consumer", "kafka_producer", "kafka_consumer"]
 
-    for process in processes:
-        process.wait()
+    processes = [
+        spawn("worker", f"-n {name}@%h --concurrency=1")
+        for name in workers
+    ]
+    processes.append(spawn("beat"))
+
+    for p in processes:
+        p.wait()
 
   
 
