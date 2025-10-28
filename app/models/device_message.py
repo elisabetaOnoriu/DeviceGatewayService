@@ -3,7 +3,7 @@ import time
 from typing import Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 
 class DeviceData(BaseModel):
@@ -14,18 +14,17 @@ class DeviceData(BaseModel):
 
 class DeviceMessage(BaseModel):
     """Model for device generated messages"""
-    id: str = Field(default_factory=lambda: str(uuid4()), description="Unique Message ID")
-    device_id: int = Field(..., description="ID device")
-    timestamp: float = Field(default_factory=time.time, description="Unix timestamp")
-    data: Optional[DeviceData] = Field(default=None, description="Sensor data")
+    id: str = Field(default_factory=lambda: str(uuid4()))
+    device_id: int
+    timestamp: float = Field(default_factory=time.time)
+    data: Optional[DeviceData] = None
 
-    @model_validator(mode="after")
-    def _autofill(self) -> "DeviceMessage":
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         if self.data is None:
             t = 20.0 + (self.device_id % 10)
-            h = 50.0 + float(self.device_id % 20)
-            self.data = DeviceData(temperature=round(t, 2), humidity=round(h, 2), status="online")
-        return self
-    
+            h = 50.0 + (self.device_id % 20)
+            self.data = DeviceData(temperature=round(t, 2), humidity=round(h, 2))
+
     def to_dict(self) -> dict:
         return self.model_dump()
