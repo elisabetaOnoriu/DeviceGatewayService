@@ -72,6 +72,25 @@ services:
     networks:
       - sky-comm
 
+  celery-worker:
+    build: .
+    command: poetry run celery -A celery_app.celery_app worker -l info
+    env_file: .env
+    depends_on:
+      - redis
+    networks:
+      - sky-comm
+
+  celery-beat:
+    build: .
+    command: poetry run celery -A celery_app.celery_app beat -l info
+    env_file: .env
+    depends_on:
+      - redis
+    networks:
+      - sky-comm
+    restart: unless-stopped
+
   device-gateway:
     build:
       context: .
