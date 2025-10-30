@@ -31,18 +31,17 @@ class SQSProducer(BaseWorker):
         return d
 
     def run(self):
-        while self.running.is_set():
-            device_id = self._next_device_id()
-            payload = DeviceMessage(device_id=device_id).to_dict()
-            body = json.dumps(payload)
+        device_id = self._next_device_id()
+        payload = DeviceMessage(device_id=device_id).to_dict()
+        body = json.dumps(payload)
 
-            try:
-                self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=body)
-                print(f"[SQSProducer {self.client_id}] sent {body} on {self.thread.name}")
-                time.sleep(self.interval_sec)
-            except Exception as e:
-                print(f"[SQSProducer {self.client_id}] send failed: {e}")
-                self.running.clear()
+        try:
+            self.sqs.send_message(QueueUrl=self.queue_url, MessageBody=body)
+            print(f"[SQSProducer {self.client_id}] sent {body} on {self.thread.name}")
+            time.sleep(self.interval_sec)
+        except Exception as e:
+            print(f"[SQSProducer {self.client_id}] send failed: {e}")                
+            self.running.clear()
 
         print(f"[SQSProducer {self.client_id}] Stopped gracefully.")
 

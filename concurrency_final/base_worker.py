@@ -1,6 +1,4 @@
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
- 
  
 class BaseWorker:
     """Base class for clients that use a thread assigned by ThreadPoolManager."""
@@ -15,7 +13,6 @@ class BaseWorker:
         self.thread = thread
  
     def run(self):
-        """Override this method with the main client loop."""
         raise NotImplementedError("Client subclass must implement 'run()'")
    
     def start(self):
