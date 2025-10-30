@@ -1,100 +1,98 @@
 from __future__ import annotations
-import logging
 import json
+from uuid import uuid4
+from kafka import KafkaConsumer
+import boto3
 
 from app.celery.config import celery_app
-from app.models.device_message import DeviceMessage
-from concurrency_final.kafka_consumer import KafkaConsumerWorker
-from concurrency_final.sqs_producer import SQSProducer
-from concurrency_final.sqs_consumer import SQSConsumer
-from concurrency_final.kafka_producer import KafkaProducerWorker
 from app.config.settings import settings
+from concurrency_final.kafka_producer import KafkaProducerWorker
 
-logger = logging.getLogger(__name__)
-
-@celery_app.task(bind=True, name="app.tasks.process_event")
-def process_event(self, msg: dict) -> dict:
-    print(f"[task={self.request.id}] {msg}")
-    return {"received": msg, "task_id": self.request.id}
+# ------------ SQS ------------
 
 @celery_app.task(name="app.sqs.produce")
-def send_sqs_messages(n: int = 10, interval_sec: float | None = None) -> str:
-    producer = SQSProducer.from_settings(settings, client_id="celery-sqs-producer")
+def sqs_produce(n: int = 1) -> str:
+    q = boto3.client(
+        "sqs",
+        region_name=settings.AWS.AWS_REGION,
+        endpoint_url=getattr(settings.AWS, "endpoint", None),
+    )
+    url = q.get_queue_url(QueueName=settings.AWS.QUEUE_NAME)["QueueUrl"]
 
-    if interval_sec is not None:
-        producer.interval_sec = interval_sec
-
-    for _ in range(n):
-        device_id = producer._next_device_id()
-        payload = DeviceMessage(device_id=device_id).to_dict()
-        body = json.dumps(payload)
-
-        producer.sqs.send_message(QueueUrl=producer.queue_url, MessageBody=body)
-        print(f"[SQSProducer {producer.client_id}] sent {body}")
-
-    return f"Sent {n} messages to {producer.queue_url}"
+    num_devices = int(getattr(getattr(settings, "SIM", object()), "NUM_DEVICES", 3))
+    sent = 0
+    for i in range(max(0, n)):
+        msg = {
+            "id": str(uuid4()),
+            "device_id": (i % max(1, num_devices)) + 1,
+        }
+        q.send_message(QueueUrl=url, MessageBody=json.dumps(msg))
+        print(f"[SQSProducer] sent id={msg['id']} device={msg['device_id']}")
+        sent += 1
+    return f"SQS sent {sent}"
 
 @celery_app.task(name="app.sqs.consume")
-def receive_sqs_messages(max_messages: int = 10) -> str:
-    consumer = SQSConsumer.from_settings(settings, client_id="celery-sqs-consumer")
-    received = 0
+def sqs_consume(n: int = 10) -> str:
+    q = boto3.client(
+        "sqs",
+        region_name=settings.AWS.AWS_REGION,
+        endpoint_url=getattr(settings.AWS, "endpoint", None),
+    )
+    url = q.get_queue_url(QueueName=settings.AWS.QUEUE_NAME)["QueueUrl"]
 
-    while received < max_messages:
-        remaining = max_messages - received
-        messages = consumer.sqs.receive_message(
-            QueueUrl=consumer.queue_url,
+    got = 0
+    while got < n:
+        remaining = n - got
+        resp = q.receive_message(
+            QueueUrl=url,
             MaxNumberOfMessages=min(10, remaining),
             WaitTimeSeconds=5,
-        ).get("Messages", [])
-
-        if not messages:
+        )
+        for m in resp.get("Messages", []):
+            body = json.loads(m["Body"])
+            print(f"[SQSConsumer] received id={body.get('id')} device={body.get('device_id')}")
+            q.delete_message(QueueUrl=url, ReceiptHandle=m["ReceiptHandle"])
+            got += 1
+            if got >= n:
+                break
+        if not resp.get("Messages"):
             break
+    return f"SQS consumed {got}"
 
-        for message in messages[:remaining]:
-            body = message["Body"]
-            print(f"[SQSConsumer {consumer.client_id}] received {body}")
-            consumer.sqs.delete_message(
-                QueueUrl=consumer.queue_url,
-                ReceiptHandle=message["ReceiptHandle"],
-            )
-            received += 1
-
-    return f"Received and deleted {received} messages from {consumer.queue_url}"
+# ------------ KAFKA ------------
 
 @celery_app.task(name="app.kafka.produce")
-def send_kafka_messages(n: int = 10) -> str:
-    producer = KafkaProducerWorker.from_settings(settings, client_id="celery-kafka-producer")
+def kafka_produce(n: int = 1) -> str:
+    worker = KafkaProducerWorker.from_settings(settings, client_id="celery-kafka-producer")
+    num_devices = int(getattr(getattr(settings, "SIM", object()), "NUM_DEVICES", 3))
 
-    for _ in range(n):
-        device_id = producer.device_ids[producer._idx]
-        producer._idx = (producer._idx + 1) % len(producer.device_ids)
-
-        message = DeviceMessage(device_id=device_id).to_dict()
-        producer.producer.send(producer.topic, value=message)
-        print(f"[KafkaProducer {producer.client_id}] sent {message}")
-
-    producer.producer.flush()
-    return f"Sent {n} messages to Kafka topic {producer.topic}"
+    sent = 0
+    for i in range(max(0, n)):
+        msg = {
+            "id": str(uuid4()),
+            "device_id": (i % max(1, num_devices)) + 1,
+        }
+        worker.producer.send(worker.topic, value=msg)
+        print(f"[KafkaProducer] sent id={msg['id']} device={msg['device_id']}")
+        sent += 1
+    worker.producer.flush()
+    worker.producer.close()
+    return f"Kafka sent {sent}"
 
 @celery_app.task(name="app.kafka.consume")
-def receive_kafka_messages(n: int = 10) -> str:
-
-    consumer = KafkaConsumerWorker.from_settings(settings, client_id="celery-kafka-consumer")._KC(
+def kafka_consume(n: int = 1) -> str:
+    consumer = KafkaConsumer(
         "device-messages",
         bootstrap_servers=["localhost:9092"],
-        group_id="device-gateway",
         auto_offset_reset="latest",
-        enable_auto_commit=True,
+        enable_auto_commit=False,
         value_deserializer=lambda m: json.loads(m.decode("utf-8")),
     )
-
     count = 0
-    for message in consumer:
-        print(f"[KafkaConsumer] received {message.value}")
+    for rec in consumer:
+        print(f"[KafkaConsumer] received {rec.value}")
         count += 1
         if count >= n:
             break
-
     consumer.close()
-    return f"Received {count} messages"
-
+    return f"Kafka consumed {count}"

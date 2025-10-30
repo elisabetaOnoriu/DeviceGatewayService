@@ -19,16 +19,16 @@ class SQSConsumer(BaseWorker):
         )
         self.queue_url = self.sqs.get_queue_url(QueueName=settings.AWS.QUEUE_NAME)["QueueUrl"]
 
+
     def run(self) -> None:
         try:
-            while self.running.is_set():
-                resp = self.sqs.receive_message(
-                    QueueUrl=self.queue_url,
-                    MaxNumberOfMessages=4,
-                    WaitTimeSeconds=10,
-                )
-                for msg in resp.get("Messages", []) or []:
-                    self._process_then_ack(msg["Body"], msg["ReceiptHandle"])
+            resp = self.sqs.receive_message(
+                QueueUrl=self.queue_url,
+                MaxNumberOfMessages=4,
+                WaitTimeSeconds=10,
+            )
+            for msg in resp.get("Messages", []) or []:
+                self._process_then_ack(msg["Body"], msg["ReceiptHandle"])
         finally:
             pass
 

@@ -1,6 +1,5 @@
 import logging
 import time
-from app.celery.tasks import send_sqs_messages
 from app.infrastructure.redis_client import RedisClient
 from app.utils.logger_provider import LoggerProvider
 from app.config.settings import settings
@@ -25,13 +24,22 @@ def main() -> None:
     #     manager.add_client(c)
 
     # manager.wait_for_all()
-    workers = ["sqs_producer", "sqs_consumer", "kafka_producer", "kafka_consumer", "beat"]
-    processes = [spawn("worker", "--concurrency=1") for _ in workers]
+    
+workers = ["sqs_producer", "sqs_consumer", "kafka_producer", "kafka_consumer"]
 
-    for process in processes:
-        process.wait()
+# pornește 1 proces Celery Worker per rol, cu nodename și (opțional) coadă dedicate
+processes = [
+    spawn("worker", f"-n {w}@%h -Q {w} --concurrency=1 --pidfile=/tmp/celery-{w}.pid")
+    for w in workers
+]
 
-  
+# pornește Celery Beat separat (fără să fie worker)
+processes.append(
+    spawn("beat", "--pidfile=/tmp/celerybeat.pid")
+)
+
+for p in processes:
+    p.wait()
 
 if __name__ == "__main__":
     main()

@@ -16,21 +16,25 @@ celery_app.conf.beat_schedule = {
     "send-sqs-m-every-1.5s": {
         "task": "app.sqs.produce",
         "schedule": 1.5,
-        "args": (1, 1.5),
+        "kwargs": {"n": 1},
+        "options": {"queue": "sqs_producer"},
     },
     "receive-sqs-m-every-1.5s": {
         "task": "app.sqs.consume",
         "schedule": 1.5,
-        "args": (1,),
+        "kwargs": {"n": 1},
+        "options": {"queue": "sqs_consumer"},
     },
     "kafka-produce-every-2s": {
         "task": "app.kafka.produce",
         "schedule": 2.0,
         "kwargs": {"n": 1},
+        "options": {"queue": "kafka_producer"},
     },
     "kafka-consume-every-2s": {
         "task": "app.kafka.consume",
         "schedule": 2.0,
         "kwargs": {"n": 1},
+        "options": {"queue": "kafka_consumer"},
     },
 }
